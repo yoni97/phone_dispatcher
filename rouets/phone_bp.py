@@ -43,71 +43,36 @@ def strong_signal():
     query = """
     MATCH (a:Device)-[r:CONNECTED]->(b:Device)
     WHERE r.signal_strength_dbm > -60
-    RETURN a.id AS from_device, b.id AS to_device, r.signal_strength_dbm AS signal_strength
+    RETURN a.id AS from_device, b.id AS to_device, r.signal_strength_dbm 
     """
     results = query_neo4j(query)
     return jsonify(results)
 
+@phone_blueprint.route('/connected_devices/<string:device_id>', methods=['GET'])
+def connected_devices(id):
+    query = """
+    MATCH (:Device {id: $id})-[r:CONNECTED]->(b:Device)
+    RETURN COUNT(b) AS connected_devices
+    """
+    results = query_neo4j(query, {"id": id})
+    return jsonify(results)
 
+@phone_blueprint.route('/is_connected', methods=['GET'])
+def is_connected():
+    from_device = request.args.get('from')
+    to_device = request.args.get('to')
+    query = """
+    MATCH (a:Device {id: $from_device})-[r:CONNECTED]->(b:Device {id: $to_device})
+    RETURN COUNT(r) > 0 AS is_connected
+    """
+    results = query_neo4j(query, {"from_device": from_device, "to_device": to_device})
+    return jsonify(results[0])
 
-
-
-
-
-
-
-#
-#
-#
-#
-# @phone_blueprint.route("/api/bluetooth-connections", methods=['GET'])
-# def bluetooth_connections():
-#     query = """
-#     MATCH (a:Device)-[r:CONNECTED {method: 'Bluetooth'}]->(b:Device)
-#     RETURN a.id AS from_device, b.id AS to_device, r.duration_seconds AS duration
-#     """
-#     results = query_neo4j(query)
-#     return jsonify(results)
-#
-#
-# @phone_blueprint.route("/api/strong-signal", methods=['GET'])
-# def strong_signal():
-#     query = """
-#     MATCH (a:Device)-[r:CONNECTED]->(b:Device)
-#     WHERE r.signal_strength_dbm > -60
-#     RETURN a.id AS from_device, b.id AS to_device
-#     """
-#     results = query_neo4j(query)
-#     return jsonify(results)
-#
-#
-# @phone_blueprint.route("/api/connected-devices/<device_id>", methods=['GET'])
-# def connected_devices(device_id):
-#     query = """
-#     MATCH (:Device {id: $device_id})-[r:CONNECTED]->(b:Device)
-#     RETURN COUNT(b) AS connected_devices
-#     """
-#     results = query_neo4j(query, {"device_id": device_id})
-#     return jsonify(results)
-#
-#
-# @phone_blueprint.route("/api/is-connected", methods=['GET'])
-# def is_connected():
-#     from_device = request.args.get('from')
-#     to_device = request.args.get('to')
-#     query = """
-#     MATCH (a:Device {id: $from_device})-[r:CONNECTED]->(b:Device {id: $to_device})
-#     RETURN COUNT(r) > 0 AS is_connected
-#     """
-#     results = query_neo4j(query, {"from_device": from_device, "to_device": to_device})
-#     return jsonify(results[0])
-#
-#
-# @phone_blueprint.route("/api/recent-interaction/<device_id>", methods=['GET'])
-# def recent_interaction(device_id):
-#     query = """
-#     MATCH (:Device {id: $device_id})-[r:CONNECTED]->(b:Device)
-#     RETURN r ORDER BY r.timestamp DESC LIMIT 1
-#     """
-#     results = query_neo4j(query, {"device_id": device_id})
-#     return jsonify(results[0] if results else {})
+@phone_blueprint.route('/recent_interaction/<string:device_id>', methods=['GET'])
+def recent_interaction(device_id):
+    query = """
+    MATCH (:Device {id: $device_id})-[r:CONNECTED]->(b:Device)
+    RETURN r ORDER BY r.timestamp DESC LIMIT 1
+    """
+    results = query_neo4j(query, {"device_id": device_id})
+    return jsonify(results[0] if results else {})
