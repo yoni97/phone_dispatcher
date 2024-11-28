@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from config.neo4j_config import neo4j_driver
-from repository.phone_repo import query_neo4j, get_bluetooth_connections, get_strong_signal, get_connected_devices, \
+from repository.phone_repo import get_bluetooth_connections, get_strong_signal, get_connected_devices, \
     get_last_connection, get_connections
 from services.phone_service import DeviceInteractions
 
