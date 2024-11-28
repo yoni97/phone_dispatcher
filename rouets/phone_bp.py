@@ -41,7 +41,9 @@ def connected_devices(id):
 @phone_blueprint.route('/is_connected', methods=['GET'])
 def is_connected():
     from_device = request.args.get('from')
+    print(from_device)
     to_device = request.args.get('to')
+    print(to_device)
     results = get_connections(from_device, to_device)
     return jsonify(results[0])
 
