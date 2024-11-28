@@ -46,8 +46,9 @@ def get_connected_devices(id):
 
 def get_connections(from_device, to_device):
     query = """
-        MATCH (a:Device {id: $from_device})-[r:CONNECTED]-(b:Device {id: $to_device})
-        RETURN COUNT(r) > 0 AS is_connected
+            MATCH (d1:Device)-[r:CONNECTED]-(d2:Device)
+            WHERE d1.id = $from_device AND d2.id = $to_device
+            RETURN COUNT(r) > 0 AS is_connected
         """
     result = query_neo4j(query, {"from_device": from_device, "to_device": to_device})
     if not result:

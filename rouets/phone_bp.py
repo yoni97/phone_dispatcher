@@ -42,7 +42,6 @@ def connected_devices(id):
 def is_connected():
     from_device = request.args.get('from')
     to_device = request.args.get('to')
-
     results = get_connections(from_device, to_device)
     return jsonify(results[0])
 
