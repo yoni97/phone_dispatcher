@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from config.neo4j_config import neo4j_driver
-from repository.phone_repo import query_neo4j
+from repository.phone_repo import query_neo4j, get_bluetooth_connections, get_strong_signal, get_connected_devices, \
+    get_last_connection, get_connections
 from services.phone_service import DeviceInteractions
 
 phone_blueprint = Blueprint('phone_blueprint', __name__)
@@ -24,64 +25,30 @@ def get_interaction():
 
 @phone_blueprint.route('/bluetooth_connections', methods=['GET'])
 def bluetooth_connections():
-    query = """
-    MATCH (start:Device)
-    MATCH (end:Device)
-    WHERE start <> end
-    MATCH path = shortestPath((start)-[:CONNECTED*]->(end))
-    WHERE ALL(r IN relationships(path) WHERE r.method = 'Bluetooth')
-    WITH path, length(path) as pathLength
-    ORDER BY pathLength DESC
-    LIMIT 1
-    RETURN length(path)
-    """
-    results = query_neo4j(query)
-    return jsonify(results)
+    result = get_bluetooth_connections()
+    return jsonify(result)
 
 @phone_blueprint.route('/strong_signal', methods=['GET'])
 def strong_signal():
-    query = """
-    MATCH (a:Device)-[r:CONNECTED]->(b:Device)
-    WHERE r.signal_strength_dbm > -60
-    RETURN a.id AS from_device, b.id AS to_device, r.signal_strength_dbm 
-    """
-    results = query_neo4j(query)
-    return jsonify(results)
+    result = get_strong_signal()
+    return jsonify(result)
 
 @phone_blueprint.route('/connected_devices/<string:id>', methods=['GET'])
 def connected_devices(id):
-    query = """
-    MATCH (:Device {id: $id})-[r:CONNECTED]->(b:Device)
-    RETURN COUNT(b) AS connected_devices
-    """
-    results = query_neo4j(query, {"id": id})
+    results = get_connected_devices(id)
     return jsonify(results)
 
 @phone_blueprint.route('/is_connected', methods=['GET'])
 def is_connected():
     from_device = request.args.get('from')
     to_device = request.args.get('to')
-    query = """
-    MATCH (a:Device {id: $from_device})-[r:CONNECTED]->(b:Device {id: $to_device})
-    RETURN COUNT(r) > 0 AS is_connected
-    """
-    results = query_neo4j(query, {"from_device": from_device, "to_device": to_device})
+
+    results = get_connections(from_device, to_device)
     return jsonify(results[0])
-
-
-from flask import jsonify
-
 
 @phone_blueprint.route('/last_connection/<string:id>', methods=['GET'])
 def last_connection(id):
-    query = """
-    MATCH (a:Device {id: $id})-[r:CONNECTED]->(b:Device)
-    RETURN a.id AS FROM_DEVICE, b.id AS TO_DEVICE,
-    r.timestamp AS timestamp
-    ORDER BY r.timestamp DESC 
-    LIMIT 1
-    """
-    results = query_neo4j(query, {"id": id})
+    results = get_last_connection(id)
 
     if results:
         results[0]['timestamp'] = results[0]['timestamp'].isoformat()
