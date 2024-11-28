@@ -48,7 +48,7 @@ def strong_signal():
     results = query_neo4j(query)
     return jsonify(results)
 
-@phone_blueprint.route('/connected_devices/<string:device_id>', methods=['GET'])
+@phone_blueprint.route('/connected_devices/<string:id>', methods=['GET'])
 def connected_devices(id):
     query = """
     MATCH (:Device {id: $id})-[r:CONNECTED]->(b:Device)
@@ -68,11 +68,11 @@ def is_connected():
     results = query_neo4j(query, {"from_device": from_device, "to_device": to_device})
     return jsonify(results[0])
 
-@phone_blueprint.route('/recent_interaction/<string:device_id>', methods=['GET'])
-def recent_interaction(device_id):
+@phone_blueprint.route('/recent_interaction/<string:id>', methods=['GET'])
+def recent_interaction(id):
     query = """
-    MATCH (:Device {id: $device_id})-[r:CONNECTED]->(b:Device)
+    MATCH (:Device {id: $id})-[r:CONNECTED]->(b:Device)
     RETURN r ORDER BY r.timestamp DESC LIMIT 1
     """
-    results = query_neo4j(query, {"device_id": device_id})
+    results = query_neo4j(query, {"id": id})
     return jsonify(results[0] if results else {})
