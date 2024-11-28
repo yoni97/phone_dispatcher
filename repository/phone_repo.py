@@ -1,5 +1,3 @@
-from flask import jsonify
-
 from config.neo4j_config import neo4j_driver
 
 def query_neo4j(cypher_query, parameters=None):
